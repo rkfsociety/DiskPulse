@@ -1,0 +1,83 @@
+name: Linux build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION="$(dotnet msbuild src/DiskPulse.App/DiskPulse.App.csproj -nologo -getProperty:Version | tr -d '[:space:]')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Restore PCPulse.Contracts
+        run: bash scripts/restore-contracts.sh
+
+      - name: Restore
+        run: dotnet restore DiskPulse.sln --locked-mode
+
+      - name: Build
+        run: dotnet build DiskPulse.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test DiskPulse.sln --configuration Release --no-build
+
+      - name: Startup and helper smoke tests
+        run: |
+          chmod +x src/DiskPulse.App/bin/Release/net10.0/DiskPulse src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper
+          ./src/DiskPulse.App/bin/Release/net10.0/DiskPulse --startup-smoke-test
+          set +e
+          ./src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper
+          HELPER_EXIT=$?
+          set -e
+          if [[ "$HELPER_EXIT" -ne 2 ]]; then
+            echo "Expected helper exit code 2 on missing args, got $HELPER_EXIT" >&2
+            exit 1
+          fi
+
+      - name: Publish Linux standalone bundles
+        run: |
+          bash scripts/publish-linux.sh linux-x64
+          bash scripts/publish-linux.sh linux-arm64
+          v="${{ steps.version.outputs.version }}"
+          for rid in linux-x64 linux-arm64; do
+            f="publish/DiskPulse-$v-$rid.tar.gz"
+            sha256sum "$f" | awk '{print tolower($1)}' | tr -d '\n' > "$f.sha256"
+          done
+
+      - name: Package PCPulse modules (Linux)
+        run: |
+          bash scripts/package-module.sh linux-x64
+          bash scripts/package-module.sh linux-arm64
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: DiskPulse-Linux
+          path: |
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-x64.tar.gz.sha256
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-arm64.tar.gz
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-arm64.tar.gz.sha256
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-x64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-x64.zip.sha256
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-arm64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-arm64.zip.sha256
+          if-no-files-found: error
+          retention-days: 3

@@ -1,0 +1,80 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read and validate version
+        id: version
+        shell: pwsh
+        run: |
+          $version = [string](dotnet msbuild src/DiskPulse.App/DiskPulse.App.csproj -nologo -getProperty:Version)
+          if ($LASTEXITCODE -ne 0) { throw "Не удалось прочитать версию src/DiskPulse.App/DiskPulse.App.csproj" }
+          $version = $version.Trim()
+          if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+              throw "Версия должна иметь формат MAJOR.MINOR.PATCH без ведущих нулей: $version"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore PCPulse.Contracts
+        shell: pwsh
+        run: ./scripts/restore-contracts.ps1
+
+      - name: Restore
+        run: dotnet restore DiskPulse.sln --locked-mode
+
+      - name: Build
+        run: dotnet build DiskPulse.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test DiskPulse.sln --configuration Release --no-build
+
+      - name: Startup and helper smoke tests
+        shell: pwsh
+        run: |
+          $appProc = Start-Process -FilePath "src/DiskPulse.App/bin/Release/net10.0/DiskPulse.exe" -ArgumentList "--startup-smoke-test" -Wait -PassThru
+          if ($appProc.ExitCode -ne 0) {
+              throw "DiskPulse.exe --startup-smoke-test failed with exit code $($appProc.ExitCode)"
+          }
+
+          $helperProc = Start-Process -FilePath "src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper.exe" -Wait -PassThru
+          if ($helperProc.ExitCode -ne 2) {
+              throw "DiskPulse.Helper.exe expected exit code 2 on missing args, got $($helperProc.ExitCode)"
+          }
+
+      - name: Publish portable executables
+        shell: pwsh
+        run: ./scripts/publish-windows.ps1
+
+      - name: Package PCPulse module (win-x64)
+        shell: pwsh
+        run: ./scripts/package-module.ps1 -Runtime win-x64
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: DiskPulse-win-x64
+          path: |
+            publish/win-x64/DiskPulse.exe
+            publish/win-x64/DiskPulse.Helper.exe
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}.manifest.json
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-win-x64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-win-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 3
