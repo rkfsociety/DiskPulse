@@ -286,6 +286,19 @@ jobs:
             }
 
             try {
+              const findAssetPath = async (dir, targetName) => {
+                const entries = await fs.readdir(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                  const full = path.join(dir, entry.name);
+                  if (entry.isFile() && entry.name === targetName) return full;
+                  if (entry.isDirectory()) {
+                    const nested = await findAssetPath(full, targetName);
+                    if (nested) return nested;
+                  }
+                }
+                return null;
+              };
+
               const assetNames = [
                 'DiskPulse.exe',
                 'DiskPulse.exe.sha256',
@@ -306,7 +319,9 @@ jobs:
 
               for (const name of assetNames) {
                 if (release.assets.some(existing => existing.name === name)) continue;
-                const data = await fs.readFile(path.join('release-files', name));
+                const filePath = await findAssetPath('release-files', name);
+                if (!filePath) throw new Error(`Missing downloaded release asset: ${name}`);
+                const data = await fs.readFile(filePath);
                 await github.rest.repos.uploadReleaseAsset({
                   owner,
                   repo,
