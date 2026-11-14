@@ -7,6 +7,8 @@ updates:
       - "/tests/DiskPulse.Tests"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "PCPulse.Contracts"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
