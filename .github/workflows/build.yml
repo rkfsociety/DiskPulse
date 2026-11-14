@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -20,14 +20,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Read and validate version
         id: version
         shell: pwsh
         run: |
-          $version = [string](dotnet msbuild DiskPulse.csproj -nologo -getProperty:Version)
-          if ($LASTEXITCODE -ne 0) { throw "Не удалось прочитать версию DiskPulse.csproj" }
+          $version = [string](dotnet msbuild src/DiskPulse.App/DiskPulse.App.csproj -nologo -getProperty:Version)
+          if ($LASTEXITCODE -ne 0) { throw "Не удалось прочитать версию src/DiskPulse.App/DiskPulse.App.csproj" }
           $version = $version.Trim()
           if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
               throw "Версия должна иметь формат MAJOR.MINOR.PATCH без ведущих нулей: $version"
@@ -40,16 +40,34 @@ jobs:
           }
           "version=$version" >> $env:GITHUB_OUTPUT
 
+      - name: Restore PCPulse.Contracts
+        shell: pwsh
+        run: ./scripts/restore-contracts.ps1
+
       - name: Restore
-        run: dotnet restore Cleaner.Tests/Cleaner.Tests.csproj --locked-mode
+        run: dotnet restore DiskPulse.sln --locked-mode
 
       - name: Build
-        run: dotnet build DiskPulse.csproj --configuration Release --no-restore
+        run: dotnet build DiskPulse.sln --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test Cleaner.Tests/Cleaner.Tests.csproj --configuration Release --no-restore
+        run: dotnet test DiskPulse.sln --configuration Release --no-build
 
-      - name: Publish portable executable
+      - name: Startup and helper smoke tests
+        shell: pwsh
+        run: |
+          $appProc = Start-Process -FilePath "src/DiskPulse.App/bin/Release/net10.0/DiskPulse.exe" -ArgumentList "--startup-smoke-test" -Wait -PassThru
+          if ($appProc.ExitCode -ne 0) {
+              throw "DiskPulse.exe --startup-smoke-test failed with exit code $($appProc.ExitCode)"
+          }
+
+          $helperProc = Start-Process -FilePath "src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper.exe" -Wait -PassThru
+          if ($helperProc.ExitCode -ne 2) {
+              throw "DiskPulse.Helper.exe expected exit code 2 on missing args, got $($helperProc.ExitCode)"
+          }
+
+      - name: Publish portable executables
+        shell: pwsh
         run: ./scripts/publish-windows.ps1
 
       - name: Ensure Inno Setup
@@ -72,55 +90,147 @@ jobs:
         shell: pwsh
         run: ./scripts/build-installer.ps1 -SkipPublish
 
-      - name: Verify published artifacts
+      - name: Package PCPulse module (win-x64)
         shell: pwsh
-        run: |
-          if (!(Test-Path publish/win-x64/DiskPulse.exe)) { throw "DiskPulse.exe was not published" }
-          if (!(Test-Path publish/installer/DiskPulse-Setup.exe)) { throw "DiskPulse-Setup.exe was not built" }
+        run: ./scripts/package-module.ps1 -Runtime win-x64
 
-      - name: Create SHA-256 files
-        if: github.event_name == 'push'
+      - name: Verify published artifacts and create SHA-256 files
         shell: pwsh
         run: |
+          $v = "${{ steps.version.outputs.version }}"
+          $required = @(
+              "publish/win-x64/DiskPulse.exe",
+              "publish/win-x64/DiskPulse.Helper.exe",
+              "publish/installer/DiskPulse-Setup.exe",
+              "publish/modules/diskpulse-module-$v.manifest.json",
+              "publish/modules/diskpulse-module-$v-win-x64.zip",
+              "publish/modules/diskpulse-module-$v-win-x64.zip.sha256"
+          )
+          foreach ($path in $required) {
+              if (!(Test-Path $path)) { throw "Missing artifact: $path" }
+          }
           foreach ($artifact in @("publish/win-x64/DiskPulse.exe", "publish/installer/DiskPulse-Setup.exe")) {
               $checksum = (Get-FileHash -LiteralPath $artifact -Algorithm SHA256).Hash.ToLowerInvariant()
               [System.IO.File]::WriteAllText("$artifact.sha256", $checksum, [System.Text.Encoding]::ASCII)
           }
 
-      - name: Upload release files
-        if: github.event_name == 'push'
+      - name: Upload Windows release files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
-          name: release-files
+          name: release-files-windows
           path: |
             publish/win-x64/DiskPulse.exe
             publish/win-x64/DiskPulse.exe.sha256
             publish/installer/DiskPulse-Setup.exe
             publish/installer/DiskPulse-Setup.exe.sha256
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}.manifest.json
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-win-x64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-win-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 3
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION="$(dotnet msbuild src/DiskPulse.App/DiskPulse.App.csproj -nologo -getProperty:Version | tr -d '[:space:]')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Restore PCPulse.Contracts
+        run: bash scripts/restore-contracts.sh
+
+      - name: Restore
+        run: dotnet restore DiskPulse.sln --locked-mode
+
+      - name: Build
+        run: dotnet build DiskPulse.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test DiskPulse.sln --configuration Release --no-build
+
+      - name: Startup and helper smoke tests
+        run: |
+          chmod +x src/DiskPulse.App/bin/Release/net10.0/DiskPulse src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper
+          ./src/DiskPulse.App/bin/Release/net10.0/DiskPulse --startup-smoke-test
+          set +e
+          ./src/DiskPulse.Helper/bin/Release/net10.0/DiskPulse.Helper
+          HELPER_EXIT=$?
+          set -e
+          if [[ "$HELPER_EXIT" -ne 2 ]]; then
+            echo "Expected helper exit code 2 on missing args, got $HELPER_EXIT" >&2
+            exit 1
+          fi
+
+      - name: Publish Linux standalone bundles
+        run: |
+          bash scripts/publish-linux.sh linux-x64
+          bash scripts/publish-linux.sh linux-arm64
+          v="${{ steps.version.outputs.version }}"
+          for rid in linux-x64 linux-arm64; do
+            f="publish/DiskPulse-$v-$rid.tar.gz"
+            sha256sum "$f" | awk '{print tolower($1)}' | tr -d '\n' > "$f.sha256"
+          done
+
+      - name: Package PCPulse modules (Linux)
+        run: |
+          bash scripts/package-module.sh linux-x64
+          bash scripts/package-module.sh linux-arm64
+
+      - name: Upload Linux release files
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-files-linux
+          path: |
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-x64.tar.gz
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-x64.tar.gz.sha256
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-arm64.tar.gz
+            publish/DiskPulse-${{ steps.version.outputs.version }}-linux-arm64.tar.gz.sha256
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-x64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-x64.zip.sha256
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-arm64.zip
+            publish/modules/diskpulse-module-${{ steps.version.outputs.version }}-linux-arm64.zip.sha256
           if-no-files-found: error
           retention-days: 3
 
   release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download release files
+      - name: Download Windows release files
         uses: actions/download-artifact@v8
         with:
-          name: release-files
+          name: release-files-windows
+          path: release-files
+
+      - name: Download Linux release files
+        uses: actions/download-artifact@v8
+        with:
+          name: release-files-linux
           path: release-files
 
       - name: Create or update release and remove older versions
         uses: actions/github-script@v9
         env:
-          VERSION: ${{ needs.build.outputs.version }}
+          VERSION: ${{ needs.build-windows.outputs.version }}
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = await import('node:fs/promises');
+            const path = await import('node:path');
             const { owner, repo } = context.repo;
             const version = process.env.VERSION;
             const parseVersion = value => {
@@ -155,7 +265,7 @@ jobs:
             const knownVersions = [...versionTags, ...versionReleases];
             const highest = knownVersions.reduce((top, item) => !top || compare(item.parsed, top.parsed) > 0 ? item : top, null);
             if (highest && compare(currentVersion, highest.parsed) < 0) {
-              throw new Error(`Project version ${version} is below the latest existing version ${highest.name}. Increase DiskPulse.csproj Version.`);
+              throw new Error(`Project version ${version} is below the latest existing version ${highest.name}. Increase Directory.Build.props Version.`);
             }
 
             let release = releases.find(item => item.tag_name === tagName);
@@ -176,20 +286,32 @@ jobs:
             }
 
             try {
-              const requiredAssets = [
-                { name: 'DiskPulse.exe', path: 'release-files/DiskPulse.exe' },
-                { name: 'DiskPulse.exe.sha256', path: 'release-files/DiskPulse.exe.sha256' },
-                { name: 'DiskPulse-Setup.exe', path: 'release-files/DiskPulse-Setup.exe' },
-                { name: 'DiskPulse-Setup.exe.sha256', path: 'release-files/DiskPulse-Setup.exe.sha256' }
+              const assetNames = [
+                'DiskPulse.exe',
+                'DiskPulse.exe.sha256',
+                'DiskPulse-Setup.exe',
+                'DiskPulse-Setup.exe.sha256',
+                `DiskPulse-${version}-linux-x64.tar.gz`,
+                `DiskPulse-${version}-linux-x64.tar.gz.sha256`,
+                `DiskPulse-${version}-linux-arm64.tar.gz`,
+                `DiskPulse-${version}-linux-arm64.tar.gz.sha256`,
+                `diskpulse-module-${version}.manifest.json`,
+                `diskpulse-module-${version}-win-x64.zip`,
+                `diskpulse-module-${version}-win-x64.zip.sha256`,
+                `diskpulse-module-${version}-linux-x64.zip`,
+                `diskpulse-module-${version}-linux-x64.zip.sha256`,
+                `diskpulse-module-${version}-linux-arm64.zip`,
+                `diskpulse-module-${version}-linux-arm64.zip.sha256`
               ];
-              for (const asset of requiredAssets) {
-                if (release.assets.some(existing => existing.name === asset.name)) continue;
-                const data = await fs.readFile(asset.path);
+
+              for (const name of assetNames) {
+                if (release.assets.some(existing => existing.name === name)) continue;
+                const data = await fs.readFile(path.join('release-files', name));
                 await github.rest.repos.uploadReleaseAsset({
                   owner,
                   repo,
                   release_id: release.id,
-                  name: asset.name,
+                  name,
                   data,
                   headers: {
                     'content-type': 'application/octet-stream',

@@ -1,7 +1,7 @@
 ; DiskPulse Inno Setup 6 installer script
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.0.20"
+  #define MyAppVersion "0.1.0"
 #endif
 #ifndef PublishDir
   #define PublishDir "..\publish\win-x64"
@@ -17,6 +17,7 @@
 #define MyAppPublisher "rkfsociety"
 #define MyAppURL "https://github.com/rkfsociety/DiskPulse"
 #define MyAppExeName "DiskPulse.exe"
+#define MyHelperExeName "DiskPulse.Helper.exe"
 
 [Setup]
 AppId={{B8E4C7D2-9A3F-4F5B-8C12-6E4A1D9F0B37}
@@ -27,12 +28,12 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}/issues
 AppUpdatesURL={#MyAppURL}/releases
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
 SetupIconFile=..\assets\cleaner-icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
@@ -45,7 +46,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes
-CloseApplicationsFilter={#MyAppExeName}
+CloseApplicationsFilter={#MyAppExeName},{#MyHelperExeName}
 RestartApplications=no
 
 [Languages]
@@ -57,6 +58,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#PublishDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#PublishDir}\{#MyHelperExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -102,7 +104,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
   begin
-    CleanupProfileInstall('DiskPulse', 'DiskPulse.exe', 'DiskPulse.lnk');
     CleanupProfileInstall('Cleaner', 'Cleaner.exe', 'Cleaner.lnk');
   end;
 end;

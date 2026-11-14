@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.HistoryView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="История очисток" Classes="page-title" />
+                <TextBlock x:Name="SummaryText" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,5,0,0" />
+            </StackPanel>
+
+            <Grid Grid.Row="1" ColumnDefinitions="170,*,120,160" Background="#151C2B">
+                <Border Grid.Column="0" BorderBrush="{StaticResource Line}" BorderThickness="1,1,1,1" Padding="10,7">
+                    <TextBlock Text="Дата" Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+                <Border Grid.Column="1" BorderBrush="{StaticResource Line}" BorderThickness="0,1,1,1" Padding="10,7">
+                    <TextBlock Text="Категории" Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+                <Border Grid.Column="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,1,1" Padding="10,7">
+                    <TextBlock Text="Файлов" Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+                <Border Grid.Column="3" BorderBrush="{StaticResource Line}" BorderThickness="0,1,1,1" Padding="10,7">
+                    <TextBlock Text="Освобождено" Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold" />
+                </Border>
+            </Grid>
+
+            <ListBox Grid.Row="2" x:Name="HistoryList" Classes="dp-list" BorderThickness="1,0,1,1">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="170,*,120,160" MinHeight="34">
+                            <TextBlock Grid.Column="0" Text="{Binding Date}" Foreground="{StaticResource Ink}" FontSize="12.5" VerticalAlignment="Center" Margin="10,6" />
+                            <TextBlock Grid.Column="1" Text="{Binding Scope}" Foreground="{StaticResource Ink}" FontSize="12.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="10,6" />
+                            <TextBlock Grid.Column="2" Text="{Binding DeletedFiles}" Foreground="{StaticResource Muted}" FontSize="12.5" VerticalAlignment="Center" Margin="10,6" />
+                            <TextBlock Grid.Column="3" Text="{Binding Reclaimed}" Foreground="{StaticResource AccentGreen}" FontSize="12.5" FontWeight="Medium" VerticalAlignment="Center" Margin="10,6" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0" Spacing="8">
+                <Button x:Name="ExportHistoryButton" Content="Экспорт..." Classes="secondary-btn" Click="ExportHistoryButton_Click" />
+                <Button x:Name="ClearHistoryButton" Content="Очистить историю" Classes="secondary-btn" Click="ClearHistoryButton_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

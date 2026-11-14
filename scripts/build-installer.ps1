@@ -5,7 +5,7 @@
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$projectPath = Join-Path $repoRoot "DiskPulse.csproj"
+$projectPath = Join-Path $repoRoot "src\DiskPulse.App\DiskPulse.App.csproj"
 $publishScript = Join-Path $PSScriptRoot "publish-windows.ps1"
 $publishDir = Join-Path $repoRoot "publish\win-x64"
 $installerScript = Join-Path $repoRoot "installer\DiskPulse.iss"
@@ -13,7 +13,7 @@ $outputDir = Join-Path $repoRoot "publish\installer"
 
 $version = [string](dotnet msbuild $projectPath -nologo -getProperty:Version)
 if ($LASTEXITCODE -ne 0) {
-    throw "Не удалось прочитать версию из DiskPulse.csproj."
+    throw "Не удалось прочитать версию из $projectPath."
 }
 
 $version = $version.Trim()
@@ -26,8 +26,12 @@ if (-not $SkipPublish) {
 }
 
 $publishedExe = Join-Path $publishDir "DiskPulse.exe"
+$publishedHelper = Join-Path $publishDir "DiskPulse.Helper.exe"
 if (!(Test-Path -LiteralPath $publishedExe -PathType Leaf)) {
     throw "Не найден опубликованный файл $publishedExe. Запустите scripts\publish-windows.ps1."
+}
+if (!(Test-Path -LiteralPath $publishedHelper -PathType Leaf)) {
+    throw "Не найден опубликованный файл $publishedHelper. Запустите scripts\publish-windows.ps1."
 }
 
 $iscc = Get-Command iscc -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source

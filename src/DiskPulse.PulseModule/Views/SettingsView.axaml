@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.SettingsView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="24" VerticalAlignment="Top">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Настройки очистки" Classes="page-title" />
+                <TextBlock Text="Настройки применяются к временным файлам и кэшам" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,18" />
+
+                <CheckBox x:Name="AgeFilterCheckBox" Content="Не удалять файлы младше 24 часов" FontSize="14" Padding="0" Margin="0,0,0,2" IsCheckedChanged="AgeFilterCheckBox_IsCheckedChanged" />
+                <TextBlock Text="Свежие файлы часто используются работающими приложениями. При включённом режиме они будут пропущены и попадут в отчёт как слишком свежие."
+                           Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="6,6,0,16" />
+
+                <TextBlock x:Name="AdminStatusText" Foreground="#34D399" FontSize="13" />
+                <TextBlock x:Name="DriveStatusText" Foreground="{StaticResource Muted}" FontSize="13" Margin="0,6,0,0" />
+
+                <Border Background="{StaticResource InputBackground}" CornerRadius="12" Padding="16" Margin="0,16,0,0">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Постоянный белый список исключений" Foreground="{StaticResource Ink}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                <Button Content="Добавить папку" Classes="secondary-btn" Padding="10,6" FontSize="12" Click="AddExclusionFolderButton_Click" />
+                                <Button Content="Добавить файл" Classes="secondary-btn" Padding="10,6" FontSize="12" Click="AddExclusionFileButton_Click" />
+                                <Button x:Name="RemoveExclusionButton" Content="Удалить" Classes="secondary-btn" Padding="10,6" FontSize="12" IsEnabled="False" Click="RemoveExclusionButton_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Файлы и папки из этого списка автоматически исключаются при проверке и очистке." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,4,0,8" />
+                        <ListBox x:Name="ExclusionsList" Height="110" Background="Transparent" BorderBrush="{StaticResource Line}" BorderThickness="1" SelectionChanged="ExclusionsList_SelectionChanged" />
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="UpdatesCard" Background="{StaticResource InputBackground}" CornerRadius="12" Padding="16" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Обновления DiskPulse" Foreground="{StaticResource Ink}" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock x:Name="UpdateVersionText" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,5,0,0" />
+                        <TextBlock x:Name="UpdateStatusText" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,5,0,0" />
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Spacing="10">
+                            <Button x:Name="CheckUpdatesButton" Content="Проверить обновления" Classes="secondary-btn" Click="CheckUpdatesButton_Click" />
+                            <Button x:Name="InstallCurrentButton" Content="Установить в профиль" Classes="primary-btn" FontSize="13" Padding="14,9" Click="InstallCurrentButton_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0" Spacing="10">
+                    <Button Content="Выбрать диски" Classes="secondary-btn" Click="DrivesButton_Click" />
+                    <Button Content="Сохранить" Classes="primary-btn" FontSize="14" Padding="18,10" Click="SaveButton_Click" />
+                </StackPanel>
+                <TextBlock x:Name="SaveStatusText" Foreground="#34D399" FontSize="13" HorizontalAlignment="Right" Margin="0,8,0,0" />
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

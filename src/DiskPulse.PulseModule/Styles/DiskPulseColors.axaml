@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WindowBackground" Color="#0A0D14" />
+    <SolidColorBrush x:Key="PanelBackground" Color="#0F131D" />
+    <SolidColorBrush x:Key="CardBackground" Color="#121725" />
+    <SolidColorBrush x:Key="InnerCardBackground" Color="#0E121E" />
+    <SolidColorBrush x:Key="InputBackground" Color="#161D2B" />
+    <SolidColorBrush x:Key="Line" Color="#20283B" />
+    <SolidColorBrush x:Key="Ink" Color="#F4F6FB" />
+    <SolidColorBrush x:Key="Muted" Color="#8E9BB0" />
+    <SolidColorBrush x:Key="MutedHover" Color="#1D2436" />
+    <SolidColorBrush x:Key="Purple" Color="#8576FF" />
+    <SolidColorBrush x:Key="PurpleHover" Color="#9386FF" />
+    <SolidColorBrush x:Key="PurpleLight" Color="#211D3B" />
+    <SolidColorBrush x:Key="AccentTeal" Color="#38B2AC" />
+    <SolidColorBrush x:Key="AccentGreen" Color="#34D399" />
+    <SolidColorBrush x:Key="AccentOrange" Color="#EF8E5B" />
+    <SolidColorBrush x:Key="AccentBlue" Color="#5B8DEF" />
+    <SolidColorBrush x:Key="Danger" Color="#EF4444" />
+
+    <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#7C6BFF" Offset="0" />
+        <GradientStop Color="#6353EE" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

@@ -1,0 +1,56 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Cleaner.App.Views"
+        x:Class="Cleaner.App.Views.MainWindow"
+        Title="DiskPulse"
+        Width="1180" Height="760"
+        MinWidth="1000" MinHeight="660"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="38"
+        Background="#0A0D14"
+        Icon="avares://DiskPulse/assets/cleaner-icon.ico">
+    <Grid>
+        <Border BorderBrush="#20283B" BorderThickness="1" Background="#0A0D14">
+            <Grid RowDefinitions="38,*">
+                <!-- Title Bar -->
+                <Grid Grid.Row="0" ColumnDefinitions="228,*,Auto" Background="#0F131D" PointerPressed="TitleBar_PointerPressed">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,0,0" Spacing="8">
+                        <Border Width="24" Height="24" CornerRadius="7">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#7C6BFF" Offset="0" />
+                                    <GradientStop Color="#6353EE" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="✦" Foreground="White" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="DiskPulse" Foreground="#F4F6FB" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" />
+                        <Border Background="#1C2436" CornerRadius="5" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock x:Name="TitleVersionText" Text="v0.1.0" Foreground="#8E9BB0" FontSize="10" FontWeight="Medium" />
+                        </Border>
+                    </StackPanel>
+
+                    <Border Grid.Column="1" Background="Transparent" />
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Width="44" Height="38" Background="Transparent" BorderThickness="0" CornerRadius="0" ToolTip.Tip="Свернуть" Click="MinimizeButton_Click">
+                            <TextBlock Text="—" Foreground="#8E9BB0" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Button>
+                        <Button Width="44" Height="38" Background="Transparent" BorderThickness="0" CornerRadius="0" ToolTip.Tip="Развернуть" Click="MaximizeButton_Click">
+                            <TextBlock Text="□" Foreground="#8E9BB0" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Button>
+                        <Button Width="44" Height="38" Background="Transparent" BorderThickness="0" CornerRadius="0" ToolTip.Tip="Закрыть" Click="CloseButton_Click">
+                            <TextBlock Text="✕" Foreground="#8E9BB0" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Module View Host -->
+                <ContentControl Grid.Row="1" x:Name="ModuleHost" />
+            </Grid>
+        </Border>
+
+        <views:AppDialogHost x:Name="DialogHost" />
+    </Grid>
+</Window>

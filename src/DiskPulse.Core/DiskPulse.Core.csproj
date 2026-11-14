@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Cleaner</RootNamespace>
+    <AssemblyName>DiskPulse.Core</AssemblyName>
+    <Product>DiskPulse</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\scripts\apply-update.ps1" LogicalName="Cleaner.ApplyUpdate.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DiskPulse.Helper" />
+    <InternalsVisibleTo Include="DiskPulse.PulseModule" />
+    <InternalsVisibleTo Include="DiskPulse.App" />
+    <InternalsVisibleTo Include="DiskPulse.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>DiskPulse.PulseModule</RootNamespace>
+    <AssemblyName>DiskPulse.PulseModule</AssemblyName>
+    <Product>DiskPulse Module for PCPulse</Product>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="PCPulse.Contracts" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiskPulse.Core\DiskPulse.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="module.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

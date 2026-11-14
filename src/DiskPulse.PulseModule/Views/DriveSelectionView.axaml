@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.DriveSelectionView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="24" VerticalAlignment="Top">
+        <StackPanel>
+            <TextBlock Text="Выбор дисков и томов" Classes="page-title" />
+            <TextBlock Text="По умолчанию выбран системный диск. Проверяются только известные Temp, кэши браузеров и корзина — произвольные пользовательские папки не сканируются."
+                       Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" Margin="0,6,0,14" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12" Spacing="8">
+                <Button Content="Выбрать все" Classes="secondary-btn" Click="SelectAllButton_Click" />
+                <Button Content="Снять все" Classes="secondary-btn" Click="ClearAllButton_Click" />
+            </StackPanel>
+            <StackPanel x:Name="DrivePanel" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0" Spacing="10">
+                <Button Content="Назад" Classes="secondary-btn" Click="BackButton_Click" />
+                <Button Content="Применить" Classes="primary-btn" FontSize="14" Padding="18,10" Click="ApplyButton_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

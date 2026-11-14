@@ -1,6 +1,9 @@
 bin/
 obj/
 publish/
+dist/
 .vs/
 *.user
 *.suo
+.packages/*.nupkg
+.packages/*.sha256

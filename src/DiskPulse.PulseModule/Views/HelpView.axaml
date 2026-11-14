@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.HelpView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="24" VerticalAlignment="Top">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Как пользоваться DiskPulse" Classes="page-title" />
+                <TextBlock Foreground="{StaticResource Ink}" FontSize="14" TextWrapping="Wrap" Margin="0,14,0,0" LineHeight="22"
+                           Text="1. На главной нажмите «Начать проверку».&#10;2. При необходимости выберите диски или разделы.&#10;3. Откройте «Показать детали», чтобы просмотреть файлы, отфильтровать их или снять галочки с тех, что нужно оставить.&#10;4. Отметьте категории очистки и нажмите «Очистить выбранное».&#10;5. Подтвердите удаление." />
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" Margin="0,18,0,0" LineHeight="20"
+                           Text="Результат проверки действует пять минут. Занятые, недоступные и связанные со ссылками (symlink/junction) файлы безопасно пропускаются. Приложение всегда запускается без прав администратора/root; для системного Temp и защищённых системных операций по требованию запускается отдельный модуль DiskPulse.Helper (через UAC на Windows или pkexec на Linux)." />
+                <TextBlock Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" Margin="0,14,0,0" LineHeight="20"
+                           Text="Раздел «Программы» на Windows анализирует реестр, UserAssist и Prefetch, а на Linux — установленные пакеты dpkg/rpm/pacman/flatpak и ярлыки .desktop. После удаления можно проверить оставшиеся файлы конфигурации/кэша и удалить их после отдельного подтверждения." />
+                <TextBlock x:Name="DataPathText" Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" Margin="0,14,0,0" />
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

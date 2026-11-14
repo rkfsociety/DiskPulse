@@ -1,0 +1,139 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource CardBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+    </Style>
+
+    <Style Selector="Border.inner-card">
+        <Setter Property="Background" Value="{StaticResource InnerCardBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+    </Style>
+
+    <Style Selector="TextBlock.page-title">
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+        <Setter Property="FontSize" Value="21" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="Button.primary-btn">
+        <Setter Property="Background" Value="{StaticResource PrimaryGradient}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="18,9" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.primary-btn:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource PurpleHover}" />
+    </Style>
+    <Style Selector="Button.primary-btn:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+
+    <Style Selector="Button.secondary-btn">
+        <Setter Property="Background" Value="#161C2C" />
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+        <Setter Property="BorderBrush" Value="#252E42" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.secondary-btn:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource MutedHover}" />
+    </Style>
+    <Style Selector="Button.secondary-btn:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+    <Style Selector="Button.nav-btn">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource Muted}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="12,9" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="FontSize" Value="13.5" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.nav-btn:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#171D2D" />
+    </Style>
+    <Style Selector="Button.nav-btn.active">
+        <Setter Property="Background" Value="#211D3D" />
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.nav-btn.active /template/ ContentPresenter">
+        <Setter Property="Background" Value="#211D3D" />
+    </Style>
+
+    <Style Selector="Button.col-header">
+        <Setter Property="Background" Value="#151C2B" />
+        <Setter Property="Foreground" Value="{StaticResource Muted}" />
+        <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.col-header:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1D2539" />
+    </Style>
+
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{StaticResource InputBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+        <Setter Property="BorderBrush" Value="#252E42" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="CaretBrush" Value="{StaticResource Ink}" />
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{StaticResource InputBackground}" />
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+        <Setter Property="BorderBrush" Value="#252E42" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource Ink}" />
+    </Style>
+
+    <Style Selector="ListBox.dp-list">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ListBox.dp-list ListBoxItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+</Styles>

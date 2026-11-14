@@ -1,7 +1,10 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/Cleaner.Tests"
+    directories:
+      - "/src/DiskPulse.App"
+      - "/src/DiskPulse.PulseModule"
+      - "/tests/DiskPulse.Tests"
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"

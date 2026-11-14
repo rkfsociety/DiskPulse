@@ -1,0 +1,17 @@
+{
+  "id": "diskpulse",
+  "name": "DiskPulse",
+  "description": "Анализ дисков, безопасная очистка временных файлов, кэшей и управление установленными программами",
+  "version": "0.1.0",
+  "contractVersion": "1.0",
+  "platforms": [
+    "windows",
+    "linux"
+  ],
+  "entryAssembly": "DiskPulse.PulseModule.dll",
+  "entryType": "DiskPulse.PulseModule.DiskPulseModule",
+  "helperExecutable": {
+    "windows": "DiskPulse.Helper.exe",
+    "linux": "DiskPulse.Helper"
+  }
+}

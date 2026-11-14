@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.ScanDetailsView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock Text="Найденные данные" Classes="page-title" />
+                <TextBlock x:Name="SummaryText" Margin="0,5,0,0" Foreground="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,0,10">
+                <TextBlock Grid.Column="0" Text="Поиск" Foreground="{StaticResource Muted}" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="SearchBox" Grid.Column="1" Height="32" Padding="8,0" VerticalContentAlignment="Center" TextChanged="SearchBox_TextChanged" />
+                <ComboBox x:Name="CategoryFilterCombo" Grid.Column="2" Width="210" Height="32" Margin="8,0,0,0" SelectionChanged="CategoryFilterCombo_SelectionChanged" />
+                <Button Grid.Column="3" Content="Выбрать видимые" Classes="secondary-btn" Height="32" Padding="12,0" Margin="8,0,0,0" Click="SelectAllButton_Click" />
+                <Button Grid.Column="4" Content="Снять видимые" Classes="secondary-btn" Height="32" Padding="12,0" Margin="8,0,0,0" Click="ClearAllButton_Click" />
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="44,190,96,*">
+                <Border Grid.Column="0" Background="#151C2B" BorderBrush="{StaticResource Line}" BorderThickness="1,1,1,1" Padding="6,7">
+                    <TextBlock Text="✓" Foreground="{StaticResource Muted}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </Border>
+                <Button Grid.Column="1" x:Name="CategoryHeaderButton" Content="Категория" Classes="col-header" BorderThickness="0,1,1,1" Click="CategoryHeader_Click" />
+                <Button Grid.Column="2" x:Name="SizeHeaderButton" Content="Размер ▼" Classes="col-header" BorderThickness="0,1,1,1" Click="SizeHeader_Click" />
+                <Button Grid.Column="3" x:Name="PathHeaderButton" Content="Путь" Classes="col-header" BorderThickness="0,1,1,1" Click="PathHeader_Click" />
+            </Grid>
+
+            <ListBox Grid.Row="3" x:Name="FilesList" Classes="dp-list" BorderThickness="1,0,1,1" SelectionMode="Single" SelectionChanged="FilesList_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="44,190,96,*" MinHeight="32">
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsIncluded, Mode=TwoWay}" Padding="0" HorizontalAlignment="Center" VerticalAlignment="Center" IsCheckedChanged="ItemCheckBox_IsCheckedChanged" />
+                            <TextBlock Grid.Column="1" Text="{Binding Category}" Foreground="{StaticResource Ink}" FontSize="12.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="2" Text="{Binding Size}" Foreground="{StaticResource AccentTeal}" FontSize="12.5" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="3" Text="{Binding Path}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,4" ToolTip.Tip="{Binding Path}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Grid Grid.Row="4" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="8">
+                    <Button x:Name="OpenLocationButton" Content="Показать в папке" Classes="secondary-btn" IsEnabled="False" Click="OpenLocationButton_Click" />
+                    <Button x:Name="ExportButton" Content="Экспорт..." Classes="secondary-btn" Click="ExportButton_Click" />
+                </StackPanel>
+                <Button Content="Назад" Classes="secondary-btn" HorizontalAlignment="Right" Click="BackButton_Click" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

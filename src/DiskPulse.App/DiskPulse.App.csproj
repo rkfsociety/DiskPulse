@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>DiskPulse</AssemblyName>
+    <RootNamespace>Cleaner.App</RootNamespace>
+    <Product>DiskPulse</Product>
+    <RuntimeIdentifiers>win-x64;linux-x64;linux-arm64</RuntimeIdentifiers>
+    <ApplicationIcon>..\..\assets\cleaner-icon.ico</ApplicationIcon>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\assets\cleaner-icon.ico" Link="assets\cleaner-icon.ico" />
+    <AvaloniaResource Include="..\..\assets\cleaner-icon.png" Link="assets\cleaner-icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
+    <PackageReference Include="PCPulse.Contracts" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiskPulse.Core\DiskPulse.Core.csproj" />
+    <ProjectReference Include="..\DiskPulse.PulseModule\DiskPulse.PulseModule.csproj" />
+  </ItemGroup>
+
+</Project>

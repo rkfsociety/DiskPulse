@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DiskPulse.PulseModule.Views.ProgramsView">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://DiskPulse.PulseModule/Styles/DiskPulseColors.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Border Classes="card" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+            <StackPanel Grid.Row="0">
+                <TextBlock Text="Установленные программы" Classes="page-title" />
+                <TextBlock x:Name="SummaryText" Text="Читаем список программ..." Foreground="{StaticResource Muted}" FontSize="13" Margin="0,5,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,14,0,10">
+                <TextBlock Grid.Column="0" Text="Поиск" Foreground="{StaticResource Muted}" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="SearchBox" Grid.Column="1" Height="32" Padding="8,0" VerticalContentAlignment="Center" TextChanged="SearchBox_TextChanged" />
+                <ComboBox x:Name="ArchFilterCombo" Grid.Column="2" Width="130" Height="32" Margin="8,0,0,0" SelectedIndex="0" SelectionChanged="ArchFilterCombo_SelectionChanged">
+                    <ComboBoxItem Content="Все арх." Tag="Все" />
+                    <ComboBoxItem Content="x64" Tag="x64" />
+                    <ComboBoxItem Content="x86" Tag="x86" />
+                    <ComboBoxItem Content="arm64" Tag="arm64" />
+                    <ComboBoxItem Content="all" Tag="all" />
+                </ComboBox>
+                <ComboBox x:Name="IdleFilterCombo" Grid.Column="3" Width="190" Height="32" Margin="8,0,0,0" SelectedIndex="0" SelectionChanged="IdleFilterCombo_SelectionChanged">
+                    <ComboBoxItem Content="Все программы" Tag="0" />
+                    <ComboBoxItem Content="Не запускались &gt; 30 дн." Tag="30" />
+                    <ComboBoxItem Content="Не запускались &gt; 90 дн." Tag="90" />
+                    <ComboBoxItem Content="Не запускались &gt; 180 дн." Tag="180" />
+                </ComboBox>
+                <Button x:Name="RefreshButton" Grid.Column="4" Content="Обновить" Classes="secondary-btn" Width="96" Height="32" Padding="0" Margin="8,0,0,0" Click="RefreshButton_Click" />
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="2*,1.2*,58,82,92,108,74,1.1*">
+                <Button Grid.Column="0" x:Name="NameHeaderButton" Content="Программа" Classes="col-header" BorderThickness="1,1,1,1" Click="ProgramColumnHeader_Click" Tag="Name" />
+                <Button Grid.Column="1" x:Name="PublisherHeaderButton" Content="Издатель" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="Publisher" />
+                <Button Grid.Column="2" Content="Арх." Classes="col-header" BorderThickness="0,1,1,1" IsHitTestVisible="False" />
+                <Button Grid.Column="3" x:Name="SizeHeaderButton" Content="Размер" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="LargestFirst" />
+                <Button Grid.Column="4" x:Name="InstalledHeaderButton" Content="Установлена" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="NewestInstall" />
+                <Button Grid.Column="5" x:Name="LastUsedHeaderButton" Content="Последний запуск" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="LeastRecentlyUsed" />
+                <Button Grid.Column="6" x:Name="IdleHeaderButton" Content="Простой" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="LeastRecentlyUsed" />
+                <Button Grid.Column="7" x:Name="SourceHeaderButton" Content="Источник" Classes="col-header" BorderThickness="0,1,1,1" Click="ProgramColumnHeader_Click" Tag="Source" />
+            </Grid>
+
+            <ListBox Grid.Row="3" x:Name="ProgramsList" Classes="dp-list" BorderThickness="1,0,1,1"
+                     SelectionMode="Single" SelectionChanged="ProgramsList_SelectionChanged" DoubleTapped="ProgramsList_DoubleTapped">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="2*,1.2*,58,82,92,108,74,1.1*" MinHeight="32">
+                            <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="{StaticResource Ink}" FontSize="12.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="1" Text="{Binding Publisher}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="2" Text="{Binding Arch}" Foreground="{StaticResource Muted}" FontSize="11.5" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="3" Text="{Binding Size}" Foreground="{StaticResource AccentTeal}" FontSize="12" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="4" Text="{Binding Installed}" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="5" Text="{Binding LastUsed}" Foreground="{StaticResource Ink}" FontSize="12" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="6" Text="{Binding Idle}" Foreground="{StaticResource AccentOrange}" FontSize="12" VerticalAlignment="Center" Margin="8,4" />
+                            <TextBlock Grid.Column="7" Text="{Binding Source}" Foreground="{StaticResource Muted}" FontSize="11.5" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="8,4" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Border Grid.Row="4" Background="{StaticResource InputBackground}" CornerRadius="8" Padding="10,8" Margin="0,10,0,0">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" x:Name="RegistryKeyLabel" Text="Ключ/запись:" Foreground="{StaticResource Muted}" FontSize="11.5" VerticalAlignment="Center" Margin="0,0,8,2" />
+                    <TextBox x:Name="RegistryKeyBox" Grid.Row="0" Grid.Column="1" IsReadOnly="True" BorderThickness="0" Background="Transparent" Foreground="{StaticResource Ink}" FontSize="11.5" Padding="0" Margin="0,0,0,2" Text="Выберите программу, чтобы увидеть детали" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Команда удаления:" Foreground="{StaticResource Muted}" FontSize="11.5" VerticalAlignment="Center" Margin="0,2,8,0" />
+                    <TextBox x:Name="UninstallCommandBox" Grid.Row="1" Grid.Column="1" IsReadOnly="True" BorderThickness="0" Background="Transparent" Foreground="{StaticResource Ink}" FontSize="11.5" Padding="0" Margin="0,2,0,0" Text="—" />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="5" Margin="0,10,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="8">
+                    <Button x:Name="ExportProgramsButton" Content="Экспорт..." Classes="secondary-btn" IsEnabled="False" Click="ExportProgramsButton_Click" />
+                    <Button x:Name="OpenSystemAppsButton" Content="Окно Windows" Classes="secondary-btn" Click="OpenSystemAppsButton_Click" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                    <Button x:Name="OpenFolderButton" Content="Папка" Classes="secondary-btn" IsEnabled="False" Click="OpenFolderButton_Click" />
+                    <Button x:Name="ScanResidualsButton" Content="Найти остатки" Classes="secondary-btn" IsEnabled="False" Click="ScanResidualsButton_Click" />
+                    <Button x:Name="UninstallButton" Content="Удалить программу" Classes="secondary-btn" IsEnabled="False" Click="UninstallButton_Click" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

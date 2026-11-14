@@ -1,0 +1,410 @@
+using Cleaner;
+using Xunit;
+
+namespace Cleaner.Tests;
+
+public class CleanerScanServiceTests
+{
+    [Fact]
+    public void NormalizeDrives_DedupesAndReducesToRoots()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            var result = CleanerScanService.NormalizeDrives(["C:\\Users\\foo", "c:\\", "D:\\", "D:\\data"]);
+            Assert.Equal(2, result.Count);
+            Assert.Contains("C:\\", result, StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("D:\\", result, StringComparer.OrdinalIgnoreCase);
+        }
+        else
+        {
+            var result = CleanerScanService.NormalizeDrives(["/home/", "/home", "/mnt/data/", "/"]);
+            Assert.Equal(3, result.Count);
+            Assert.Contains("/home", result, StringComparer.Ordinal);
+            Assert.Contains("/mnt/data", result, StringComparer.Ordinal);
+            Assert.Contains("/", result, StringComparer.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void NormalizeDrives_IgnoresBlankEntries()
+    {
+        var sample = OperatingSystem.IsWindows() ? "C:\\" : "/";
+        var result = CleanerScanService.NormalizeDrives(["", "  ", sample]);
+        Assert.Single(result);
+    }
+
+    [Fact]
+    public void BuildWindowsTempRoots_ReturnsEmpty_WhenSystemDriveNotSelected()
+    {
+        var nonSystem = OperatingSystem.IsWindows() ? "Z:\\" : "/non-existent-mount-z";
+        var result = CleanerScanService.BuildWindowsTempRoots([nonSystem]);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void BuildWindowsTempRoots_ReturnsOnlySystemRoots_WhenSystemDriveSelected()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var systemRoot = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows))!;
+        var result = CleanerScanService.BuildWindowsTempRoots([systemRoot]);
+
+        Assert.NotEmpty(result);
+        Assert.All(result, root => Assert.StartsWith(systemRoot, root, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void DeleteFiles_SkipsFilesOutsideRoots()
+    {
+        using var scope = new TempScope();
+        var outsidePath = scope.CreateFile("outside.tmp");
+        var files = new[] { new ScanFile(outsidePath, 10) };
+
+        var result = CleanerScanService.DeleteFiles(files, [scope.CreateSubdirectory("allowed")], minimumAgeHours: 0, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(1, result.SkippedFiles);
+        Assert.True(File.Exists(outsidePath));
+    }
+
+    [Fact]
+    public void DeleteFiles_DeletesFilesInsideRootsAndSumsReclaimedBytes()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "a.tmp");
+        File.WriteAllBytes(filePath, new byte[16]);
+
+        var files = new[] { new ScanFile(filePath, 16) };
+
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 0, CancellationToken.None);
+
+        Assert.Equal(1, result.DeletedFiles);
+        Assert.Equal(0, result.SkippedFiles);
+        Assert.Equal(16, result.ReclaimedBytes);
+        Assert.False(File.Exists(filePath));
+    }
+
+    [Fact]
+    public void DeleteFiles_SkipsRecentlyWrittenFiles_WhenMinimumAgeSet()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "fresh.tmp");
+        File.WriteAllBytes(filePath, new byte[4]);
+
+        var files = new[] { new ScanFile(filePath, 4) };
+
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 24, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(1, result.SkippedFiles);
+        Assert.True(File.Exists(filePath));
+    }
+
+    [Fact]
+    public void DeleteFiles_SkipsMissingFiles()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var missingPath = Path.Combine(root, "gone.tmp");
+
+        var files = new[] { new ScanFile(missingPath, 4) };
+
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 0, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(1, result.SkippedFiles);
+    }
+
+    [Fact]
+    public void DeleteFiles_HonorsCancellationBeforeDeleting()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var first = Path.Combine(root, "first.tmp");
+        var second = Path.Combine(root, "second.tmp");
+        File.WriteAllBytes(first, new byte[1]);
+        File.WriteAllBytes(second, new byte[1]);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() => CleanerScanService.DeleteFiles(
+            [new ScanFile(first, 1), new ScanFile(second, 1)], [root], 0, cancellation.Token));
+        Assert.True(File.Exists(first));
+        Assert.True(File.Exists(second));
+    }
+
+    [Fact]
+    public void DeleteFiles_ReportsActualCleanupProgress()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "a.tmp");
+        File.WriteAllBytes(filePath, new byte[8]);
+        var progress = new ProgressCollector<CleanupProgress>();
+
+        CleanerScanService.DeleteFiles([new ScanFile(filePath, 8)], [root], 0, CancellationToken.None, progress, "Тест");
+
+        var final = Assert.Single(progress.Values);
+        Assert.Equal("Тест", final.Stage);
+        Assert.Equal(1, final.DeletedFiles);
+        Assert.Equal(8, final.ReclaimedBytes);
+    }
+
+    [Fact]
+    public void IsSafePathForDeletion_AcceptsRegularFileInsideAllowedRoot()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "a.tmp");
+        File.WriteAllBytes(filePath, [1]);
+
+        var safe = CleanerScanService.IsSafePathForDeletion(
+            Path.GetFullPath(filePath),
+            [CleanerPaths.EnsureTrailingSeparator(root)]);
+
+        Assert.True(safe);
+    }
+
+    [Fact]
+    public void ScanResult_ExpiresAfterConfiguredInterval()
+    {
+        var scannedAt = DateTimeOffset.Now.AddMinutes(-6);
+        var result = new ScanResult([], [], new RecycleBinInfo(0, 0), scannedAt);
+
+        Assert.False(result.IsFresh(TimeSpan.FromMinutes(5), DateTimeOffset.Now));
+    }
+
+    [Fact]
+    public void HasRecycleBinChanged_DetectsNewItemsOrBytes()
+    {
+        Assert.True(CleanerScanService.HasRecycleBinChanged(new RecycleBinInfo(10, 1), new RecycleBinInfo(11, 1)));
+        Assert.True(CleanerScanService.HasRecycleBinChanged(new RecycleBinInfo(10, 1), new RecycleBinInfo(10, 2)));
+        Assert.False(CleanerScanService.HasRecycleBinChanged(new RecycleBinInfo(10, 1), new RecycleBinInfo(10, 1)));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_AccountsForPartialRecycleBinFailure()
+    {
+        var first = OperatingSystem.IsWindows() ? "C:\\" : "/";
+        var second = OperatingSystem.IsWindows() ? "D:\\" : "/home";
+        var recycleBin = new FakeRecycleBinService(
+            new Dictionary<string, RecycleBinInfo>(CleanerPaths.PathComparer) { [first] = new(10, 1), [second] = new(20, 2) },
+            new Dictionary<string, bool>(CleanerPaths.PathComparer) { [first] = true, [second] = false });
+        var service = new CleanerScanService(recycleBin);
+        var scan = new ScanResult([], [], new RecycleBinInfo(30, 3), DateTimeOffset.Now);
+
+        var result = await service.DeleteAsync(scan, [first, second], false, false, true, 0);
+
+        Assert.Equal(1, result.DeletedFiles);
+        Assert.Equal(2, result.SkippedFiles);
+        Assert.Equal(10, result.ReclaimedBytes);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_SkipsExcludedScanPaths()
+    {
+        using var scope = new TempScope();
+        var tempRoot = Path.GetTempPath();
+        var driveRoot = Path.GetPathRoot(tempRoot)!;
+        var deletedFile = scope.CreateFile("delete-me.tmp");
+        var keptFile = scope.CreateFile("keep-me.tmp");
+        var scan = new ScanResult(
+            [new ScanFile(deletedFile, 4, "Temp"), new ScanFile(keptFile, 4, "Temp")],
+            [],
+            new RecycleBinInfo(0, 0),
+            DateTimeOffset.Now);
+        var recycleBin = new FakeRecycleBinService(new Dictionary<string, RecycleBinInfo>(), new Dictionary<string, bool>());
+        var service = new CleanerScanService(recycleBin);
+        var excluded = new HashSet<string>(CleanerPaths.PathComparer) { keptFile };
+
+        var result = await service.DeleteAsync(scan, [driveRoot], true, false, false, 0, excludedPaths: excluded);
+
+        Assert.Equal(1, result.DeletedFiles);
+        Assert.Equal(4, result.ReclaimedBytes);
+        Assert.False(File.Exists(deletedFile));
+        Assert.True(File.Exists(keptFile));
+    }
+
+    [Fact]
+    public void DeleteFiles_RemovesEmptyNestedSubdirectoriesInsideAllowedRoot()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var nested = Path.Combine(root, "level1", "level2");
+        Directory.CreateDirectory(nested);
+        var filePath = Path.Combine(nested, "temp.bin");
+        File.WriteAllBytes(filePath, [1, 2, 3]);
+
+        var result = CleanerScanService.DeleteFiles([new ScanFile(filePath, 3)], [root], 0, CancellationToken.None);
+
+        Assert.Equal(1, result.DeletedFiles);
+        Assert.False(Directory.Exists(nested));
+        Assert.False(Directory.Exists(Path.Combine(root, "level1")));
+        Assert.True(Directory.Exists(root));
+    }
+
+    [Fact]
+    public void DeleteFiles_SkipsFile_WhenCachedLastWriteTimeIsRecent()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "old-on-disk.tmp");
+        File.WriteAllBytes(filePath, [1, 2, 3, 4]);
+        File.SetLastWriteTimeUtc(filePath, DateTime.UtcNow.AddHours(-48));
+
+        var files = new[] { new ScanFile(filePath, 4, "Temp", DateTime.UtcNow) };
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 24, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(1, result.SkippedFiles);
+        Assert.True(File.Exists(filePath));
+    }
+
+    [Fact]
+    public void DeleteFiles_SkipsFile_WhenFileBecameRecentAfterScan()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("allowed");
+        var filePath = Path.Combine(root, "updated.tmp");
+        File.WriteAllBytes(filePath, [1, 2, 3, 4]);
+
+        var files = new[] { new ScanFile(filePath, 4, "Temp", DateTime.UtcNow.AddHours(-48)) };
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 24, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(1, result.SkippedFiles);
+        Assert.True(File.Exists(filePath));
+    }
+
+    [Fact]
+    public void ScanDirectory_UsesExplicitRootCategory_EvenWhenPathContainsBrowserOrAppNames()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("Chrome");
+        var nested = Path.Combine(root, "Code", "Opera");
+        Directory.CreateDirectory(nested);
+        File.WriteAllBytes(Path.Combine(nested, "temp.tmp"), [1, 2, 3]);
+
+        var files = CleanerScanService.ScanDirectory(root, "Временные файлы и кэш пользователя", CancellationToken.None);
+
+        var scanned = Assert.Single(files);
+        Assert.Equal("Временные файлы и кэш пользователя", scanned.Category);
+    }
+
+    [Theory]
+    [InlineData(@"C:\Users\roman\AppData\Local\Yandex\YandexBrowser\Application\browser.exe", true)]
+    [InlineData(@"C:\Program Files (x86)\Yandex\YandexBrowser\Application\browser.exe", true)]
+    [InlineData("/opt/yandex/browser/yandex_browser", true)]
+    [InlineData(@"C:\Program Files\SomeOtherApp\browser.exe", false)]
+    [InlineData(null, false)]
+    public void IsYandexBrowserExecutablePath_DistinguishesYandexFromGenericBrowserExe(string? path, bool expected)
+    {
+        Assert.Equal(expected, DesktopIntegrationService.IsYandexBrowserExecutablePath(path));
+    }
+
+    [Fact]
+    public void DeleteFiles_ReportsDetailedSkipReasons_ForTooNewAndNotFound()
+    {
+        using var scope = new TempScope();
+        var root = scope.CreateSubdirectory("root");
+        var freshFile = Path.Combine(root, "fresh.tmp");
+        File.WriteAllBytes(freshFile, new byte[8]);
+        var missingFile = Path.Combine(root, "missing.tmp");
+
+        var files = new[]
+        {
+            new ScanFile(freshFile, 8, "Temp", DateTime.UtcNow),
+            new ScanFile(missingFile, 4, "Temp", DateTime.UtcNow.AddDays(-2))
+        };
+
+        var result = CleanerScanService.DeleteFiles(files, [root], minimumAgeHours: 24, CancellationToken.None);
+
+        Assert.Equal(0, result.DeletedFiles);
+        Assert.Equal(2, result.SkippedFiles);
+        Assert.NotNull(result.SkipReasons);
+        Assert.Equal(1, result.SkipReasons![CleanupSkipReason.TooNew]);
+        Assert.Equal(1, result.SkipReasons![CleanupSkipReason.NotFound]);
+
+        var formatted = CleanerScanService.FormatSkipReasons(result.SkipReasons, 24);
+        Assert.Contains("младше 24 ч: 1", formatted);
+        Assert.Contains("уже удалены: 1", formatted);
+    }
+
+    [Theory]
+    [InlineData("thumbcache_96.db", true)]
+    [InlineData("THUMBCACHE_256.DB", true)]
+    [InlineData("iconcache_32.db", false)]
+    [InlineData("thumbcache_96.txt", false)]
+    public void IsThumbcacheFileName_MatchesOnlyThumbcacheDb(string fileName, bool expected)
+    {
+        Assert.Equal(expected, CleanerScanService.IsThumbcacheFileName(fileName));
+    }
+
+    [Fact]
+    public void ScanResult_IncludesDevCacheFilesInTotals()
+    {
+        var scan = new ScanResult(
+            [new ScanFile(Path.Combine(Path.GetTempPath(), "a.tmp"), 100)],
+            [new ScanFile(Path.Combine(Path.GetTempPath(), "b.tmp"), 200)],
+            new RecycleBinInfo(300, 1),
+            DateTimeOffset.UtcNow,
+            [new ScanFile(Path.Combine(Path.GetTempPath(), "c.nupkg"), 400)]);
+
+        Assert.Equal(400, scan.DevCacheBytes);
+        Assert.Equal(1000, scan.TotalBytes);
+        Assert.Equal(4, scan.TotalFiles);
+    }
+
+    private sealed class TempScope : IDisposable
+    {
+        private readonly string _root = Path.Combine(Path.GetTempPath(), $"cleaner-test-{Guid.NewGuid():N}");
+
+        public TempScope()
+        {
+            Directory.CreateDirectory(_root);
+        }
+
+        public string CreateSubdirectory(string name)
+        {
+            var path = Path.Combine(_root, name);
+            Directory.CreateDirectory(path);
+            return path;
+        }
+
+        public string CreateFile(string name)
+        {
+            var path = Path.Combine(_root, name);
+            File.WriteAllBytes(path, new byte[4]);
+            return path;
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(_root))
+            {
+                Directory.Delete(_root, recursive: true);
+            }
+        }
+    }
+
+    private sealed class ProgressCollector<T> : IProgress<T>
+    {
+        public List<T> Values { get; } = [];
+
+        public void Report(T value) => Values.Add(value);
+    }
+
+    private sealed class FakeRecycleBinService(IReadOnlyDictionary<string, RecycleBinInfo> info, IReadOnlyDictionary<string, bool> results) : IRecycleBinService
+    {
+        public RecycleBinInfo GetInfo(IEnumerable<string>? roots = null) => new(info.Values.Sum(value => value.Bytes), info.Values.Sum(value => value.Items));
+
+        public IReadOnlyDictionary<string, RecycleBinInfo> GetInfoPerRoot(IEnumerable<string>? roots = null) => info;
+
+        public bool Empty(string? root) => root is not null && results.TryGetValue(root, out var succeeded) && succeeded;
+    }
+}

@@ -7,8 +7,8 @@
 ## Принятые решения
 
 - Приложение запускается обычным графическим `.exe` двойным кликом.
-- Планируемая технология: C#/.NET 8 WPF.
-- Публикация: автономная сборка `win-x64` в формате single-file, чтобы пользователю не требовалась отдельная установка .NET.
+- Планируемая технология: .NET 10 (net10.0), кроссплатформенный UI на Avalonia 12.1.6 (`ThemeVariant.Dark`), модуль `DiskPulse.PulseModule` (`PCPulse.Contracts 1.0.0`).
+- Публикация: автономные сборки (`win-x64`, `linux-x64`, `linux-arm64`) без UAC/root при старте (`DiskPulse.Helper` вызывается по требованию через UAC/pkexec), per-user установщик Windows (`installer/DiskPulse.iss`) и zip-архивы модуля PCPulse.
 - Работа ведётся напрямую в ветке `main`.
 - Новые ветки и pull request не создаются.
 
@@ -94,3 +94,4 @@
 - Реализация сгенерированного UI-референса (`0.0.19`): векторные иконки в сайдбаре (`Path`), фирменные градиенты для кнопок первичных действий (`PrimaryGradient`), обновлённая гармоничная цветовая палитра сегментов диска (бирюзовый `#34D399` для свободного места), стилизованные чекбоксы с лаконичными названиями категорий и улучшенные модальные окна диалогов `AppDialogHost`.
 - Реализованы новые функции (`0.0.20`): фильтр по категориям и кнопки «Выбрать/Снять видимые» в `ScanDetailsView`; постоянный белый список исключений в `%LOCALAPPDATA%\Cleaner\exclusions.json` (`ExclusionListService`, настройки в `SettingsView`); детализация причин пропуска файлов в `CleanupResult.SkipReasons` и сводке очистки; безопасные категории очистки (`thumbcache_*.db` и кэши разработки NuGet/npm/Yarn/pnpm/pip с отдельным выбором `DevCachesCheckBox` и предупреждением); в `ProgramsView` добавлены фильтр и колонка архитектуры (`x64`/`x86`), отображение ключа реестра и команды удаления в деталях, а также экспорт списков и отчётов в CSV/JSON (`ReportExportService`).
 - Репозиторий и продукт переименованы в `DiskPulse` (`rkfsociety/DiskPulse`, `DiskPulse.csproj`, `DiskPulse.exe`, `DiskPulse-Setup.exe`, `installer/DiskPulse.iss`, профильная установка в `%LOCALAPPDATA%\Programs\DiskPulse` и UI). Внутренний C# namespace `Cleaner` и папка пользовательских данных `%LOCALAPPDATA%\Cleaner` сохранены для совместимости настроек и истории.
+- Выполнена адаптация для кроссплатформенной экосистемы PCPulse (`0.1.0`): миграция на `.NET 10` и `Avalonia 12.1.6`, разделение на `DiskPulse.Core` / `DiskPulse.Helper` / `DiskPulse.PulseModule` / `DiskPulse.App` / `DiskPulse.Tests`, удаление `requireAdministrator` (вынесено в `DiskPulse.Helper` через `IPulseHostContext.Elevation`), нативная поддержка Linux (корзина FreeDesktop, `/proc/mounts`, раздел «Программы» на базе `dpkg`/`rpm`/`pacman`/`flatpak` + `.desktop`, пользовательские остатки и удаление через `pkexec`), per-user `DiskPulse.iss` и выпуск модульных артефактов для Windows и Linux в CI.

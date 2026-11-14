@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Cleaner.Tests</RootNamespace>
+    <AssemblyName>DiskPulse.Tests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="PCPulse.Contracts" Version="1.0.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DiskPulse.Core\DiskPulse.Core.csproj" />
+    <ProjectReference Include="..\..\src\DiskPulse.Helper\DiskPulse.Helper.csproj" />
+    <ProjectReference Include="..\..\src\DiskPulse.PulseModule\DiskPulse.PulseModule.csproj" />
+  </ItemGroup>
+
+</Project>
