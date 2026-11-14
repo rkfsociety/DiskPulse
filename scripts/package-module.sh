@@ -13,7 +13,7 @@ MODULE_PROJECT="$REPO_ROOT/src/DiskPulse.PulseModule/DiskPulse.PulseModule.cspro
 HELPER_PROJECT="$REPO_ROOT/src/DiskPulse.Helper/DiskPulse.Helper.csproj"
 MODULES_OUT="$REPO_ROOT/publish/modules"
 
-"$SCRIPT_DIR/restore-contracts.sh"
+bash "$SCRIPT_DIR/restore-contracts.sh"
 
 VERSION="$(dotnet msbuild "$MODULE_PROJECT" -nologo -getProperty:Version | tr -d '[:space:]')"
 if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then

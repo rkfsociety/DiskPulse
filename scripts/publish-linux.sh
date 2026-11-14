@@ -13,7 +13,7 @@ APP_PROJECT="$REPO_ROOT/src/DiskPulse.App/DiskPulse.App.csproj"
 HELPER_PROJECT="$REPO_ROOT/src/DiskPulse.Helper/DiskPulse.Helper.csproj"
 OUTPUT_DIR="$REPO_ROOT/publish/$RID"
 
-"$SCRIPT_DIR/restore-contracts.sh"
+bash "$SCRIPT_DIR/restore-contracts.sh"
 mkdir -p "$OUTPUT_DIR"
 
 for project in "$APP_PROJECT" "$HELPER_PROJECT"; do
