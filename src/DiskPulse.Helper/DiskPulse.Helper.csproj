@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>Cleaner</RootNamespace>
     <AssemblyName>DiskPulse.Helper</AssemblyName>
     <Product>DiskPulse Helper</Product>

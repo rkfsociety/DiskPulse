@@ -158,6 +158,8 @@ internal sealed class StandaloneHostContext : IPulseHostContext
             {
                 UseShellExecute = true,
                 Verb = "runas",
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
                 WorkingDirectory = Path.GetDirectoryName(helperPath) ?? AppContext.BaseDirectory
             };
             foreach (var arg in args)
